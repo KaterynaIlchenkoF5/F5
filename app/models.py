@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-from sqlalchemy import Column, String, Boolean, DateTime
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import Column, String, Boolean, DateTime, Integer, Text, ForeignKey
+from sqlalchemy.orm import DeclarativeBase, relationship
 from datetime import datetime, timezone
 
 
@@ -18,6 +18,29 @@ class User(Base):
     enabled = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     last_login = Column(DateTime(timezone=True), nullable=True)
+
+
+class Event(Base):
+    __tablename__ = "events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    title = Column(String(256), nullable=False)
+    description = Column(Text, nullable=True)
+    starts_at = Column(DateTime, nullable=False)
+    ends_at = Column(DateTime, nullable=True)
+
+    participants = relationship("EventParticipant", back_populates="event")
+
+
+class EventParticipant(Base):
+    __tablename__ = "event_participants"
+
+    event_id = Column(Integer, ForeignKey("events.id"), primary_key=True)
+    username = Column(String(128), ForeignKey("users.username"), primary_key=True)
+    registered_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    event = relationship("Event", back_populates="participants")
+    user = relationship("User")
 
 
 # ---------- Pydantic schemas ----------
@@ -45,5 +68,12 @@ class UserRead(BaseModel):
     email: str | None
     enabled: bool
     created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class EventParticipantRead(BaseModel):
+    username: str
+    registered_at: datetime
 
     model_config = {"from_attributes": True}
