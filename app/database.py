@@ -5,7 +5,7 @@ from .models import Base
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "sqlite+aiosqlite:///./apm_auth.db",
+    "mysql+aiomysql://apm:changeme@localhost/apm_auth",
 )
 
 engine = create_async_engine(DATABASE_URL, echo=False)

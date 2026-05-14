@@ -2,16 +2,17 @@ version: "3.9"
 
 services:
   db:
-    image: postgres:16-alpine
+    image: mysql:8.0
     restart: unless-stopped
     environment:
-      POSTGRES_DB: apm_auth
-      POSTGRES_USER: apm
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      MYSQL_DATABASE: apm_auth
+      MYSQL_USER: apm
+      MYSQL_PASSWORD: ${DB_PASSWORD:-changeme}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootchangeme}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mysqldata:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U apm -d apm_auth"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uapm", "-p${DB_PASSWORD:-changeme}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -22,10 +23,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: "postgresql+asyncpg://apm:${DB_PASSWORD:-changeme}@db/apm_auth"
+      DATABASE_URL: "mysql+aiomysql://apm:${DB_PASSWORD:-changeme}@db/apm_auth"
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
-  pgdata:
+  mysqldata:
